@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"crypto/tls"
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
@@ -59,6 +60,11 @@ func submitLibrato() (err error) {
 		log.Printf("sending payload:\n%s\n", string(payload))
 	}
 
+	tr := &http.Transport{
+		TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
+	}
+	client := &http.Client{Transport: tr}
+
 	req, err := http.NewRequest("POST", "https://metrics-api.librato.com/v1/metrics", bytes.NewBuffer(payload))
 	if err != nil {
 		return
@@ -69,7 +75,7 @@ func submitLibrato() (err error) {
 	req.SetBasicAuth(*libratoUser, *libratoToken)
 	req.Close = true
 
-	resp, err := http.DefaultClient.Do(req)
+	resp, err := client.Do(req)
 	if err != nil {
 		return
 	}
